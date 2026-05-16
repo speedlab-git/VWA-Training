@@ -1,8 +1,6 @@
 <div align="center">
 <h1>m-WSPO: Multimodal Weak-to-Strong Preference Optimization</h1>
 
-Farhan Ishmam, &lt;Hossain&gt;, &lt;Fahim&gt;
-
 [<a href="./agent.md">Spec</a>] | [<a href="./LLaMA-Factory/examples/train_m_wspo/README.md">m-WSPO Recipes</a>] | [<a href="./wspo-ref/README.md">Upstream WSPO (text-only)</a>]
 
 </div>
