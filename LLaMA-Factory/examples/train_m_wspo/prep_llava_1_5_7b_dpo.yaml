@@ -1,0 +1,58 @@
+### Prep step: build the *DPO-aligned weak* model `pi_r^w` for m-WSPO.
+###
+### m-WSPO requires a frozen weak pair (pi_ref^w, pi_r^w) where pi_r^w is
+### the same base as pi_ref^w but DPO-finetuned on the same preference set.
+### Run this config FIRST; pass the resulting checkpoint to
+### `mwspo_weak_aligned_model:` in `llava_next_13b_m_wspo.yaml`.
+###
+### This is a vanilla `stage: dpo` run -- no m-WSPO machinery involved.
+
+### model
+model_name_or_path: llava-hf/llava-1.5-7b-hf
+trust_remote_code: true
+
+### method
+stage: dpo
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 32
+lora_alpha: 64
+pref_beta: 0.1
+pref_loss: sigmoid
+
+### dataset (same preference set you'll use for m-WSPO!)
+dataset: rlhf_v
+template: vicuna
+cutoff_len: 2048
+max_samples: 100000
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/llava_1_5_7b/dpo_rlhfv
+overwrite_output_dir: true
+plot_loss: true
+logging_steps: 10
+save_steps: 500
+report_to: none
+
+### train
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 5.0e-6
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+bf16: true
+ddp_timeout: 180000000
+deepspeed: examples/deepspeed/ds_z3_config.json
+gradient_checkpointing: true
+
+### After training, merge the LoRA back into the base for use as a frozen
+### weak-aligned model (m-WSPO loads it via `from_pretrained`):
+###
+###   llamafactory-cli export examples/train_m_wspo/merge_llava_1_5_7b.yaml
+###
+### or pass the LoRA path through `mwspo_weak_aligned_adapters:` if you
+### prefer to keep the adapters separate.

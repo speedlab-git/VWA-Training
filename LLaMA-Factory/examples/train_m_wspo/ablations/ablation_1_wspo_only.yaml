@@ -1,0 +1,55 @@
+### Ablation 1 -- L_WSPO only (alpha=0, beta_dpo=0).
+###
+### Tests how much of the m-WSPO gain comes from the basic weak-to-strong
+### transfer term alone (Eq. 6).
+
+### model
+model_name_or_path: llava-hf/llava-v1.6-vicuna-13b-hf
+trust_remote_code: true
+
+### method
+stage: m_wspo
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 64
+lora_alpha: 128
+
+### m-WSPO ablation knobs
+mwspo_gamma:           0.1
+mwspo_alpha:           0.0
+mwspo_beta_dpo:        0.0
+mwspo_dpo_temperature: 0.1
+mwspo_disable_img_wspo: true
+mwspo_disable_dpo:      true
+
+mwspo_weak_ref_model:     llava-hf/llava-1.5-7b-hf
+mwspo_weak_aligned_model: <YOUR-ORG>/llava-1.5-7b-dpo-rlhfv
+
+### dataset
+dataset: rlhf_v_mwspo
+template: vicuna
+cutoff_len: 2048
+max_samples: 100000
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/llava_next_13b/m_wspo_ablation_1_wspo_only
+overwrite_output_dir: true
+plot_loss: true
+logging_steps: 10
+save_steps: 500
+report_to: none
+
+### train
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 5.0e-7
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+bf16: true
+ddp_timeout: 180000000
+deepspeed: examples/deepspeed/ds_z3_config.json
+gradient_checkpointing: true

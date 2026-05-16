@@ -1,0 +1,61 @@
+### m-WSPO training config: Qwen2-VL 7B (strong) + Qwen2-VL 2B (weak pair)
+###
+### Replace the placeholders marked <YOUR-...> before launching.
+### NOTE: Qwen2-VL produces variable-length image-token sequences depending
+### on the image grid. For the in-batch m_l swap to be safe, all images
+### should be pre-resized to a common resolution (set `image_max_pixels`).
+
+### model
+model_name_or_path: Qwen/Qwen2-VL-7B-Instruct
+image_max_pixels: 262144
+video_max_pixels: 16384
+trust_remote_code: true
+
+### method
+stage: m_wspo
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 32
+lora_alpha: 64
+
+### m-WSPO specific
+mwspo_gamma:           0.1
+mwspo_alpha:           0.5
+mwspo_beta_dpo:        1.0
+mwspo_dpo_temperature: 0.1
+
+mwspo_weak_ref_model:     Qwen/Qwen2-VL-2B-Instruct
+mwspo_weak_aligned_model: <YOUR-ORG>/qwen2-vl-2b-dpo-rlhfv
+
+mwspo_neg_image_strategy: in_batch
+mwspo_cache_weak_logprobs: false
+# mwspo_weak_logprob_cache: cache/rlhf_v_mwspo_weak_lp_qwen2vl.parquet
+
+### dataset
+dataset: rlhf_v_mwspo
+template: qwen2_vl
+cutoff_len: 2048
+max_samples: 100000
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/qwen2_vl_7b/m_wspo
+overwrite_output_dir: true
+plot_loss: true
+logging_steps: 10
+save_steps: 500
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 16
+learning_rate: 5.0e-7
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+bf16: true
+ddp_timeout: 180000000
+deepspeed: examples/deepspeed/ds_z3_config.json
+gradient_checkpointing: true
