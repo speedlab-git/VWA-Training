@@ -1,0 +1,8 @@
+### Merge LLaVA-1.5-13B m-WSPO v2 LoRA adapter into the base model.
+model_name_or_path: /raid/scratch/mdhossa2025/mdhossa/models/llava-1.5-13b-hf
+adapter_name_or_path: saves/llava_1_5_13b/m_wspo_v2/checkpoint-270
+template: llava
+finetuning_type: lora
+trust_remote_code: true
+export_dir: saves/llava_1_5_13b/m_wspo_v2_merged
+export_legacy_format: false

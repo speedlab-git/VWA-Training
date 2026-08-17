@@ -23,7 +23,7 @@ pref_loss: sigmoid
 
 ### dataset (same preference set you'll use for m-WSPO!)
 dataset: rlhf_v
-template: vicuna
+template: llava
 cutoff_len: 2048
 max_samples: 100000
 preprocessing_num_workers: 16

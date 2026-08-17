@@ -428,6 +428,33 @@ class MWSPOArguments:
         default=0.1,
         metadata={"help": "Temperature inside sigma(.) for L_DPO^m (Eq. 10)."},
     )
+    mwspo_dpo_loss_type: Literal["sigmoid", "ipo", "cdpo"] = field(
+        default="sigmoid",
+        metadata={
+            "help": (
+                "Form of L_DPO^m (Eq. 10). 'sigmoid' is canonical DPO; 'ipo' uses a squared "
+                "log-ratio-margin loss; 'cdpo' is label-smoothed DPO."
+            )
+        },
+    )
+    mwspo_dpo_label_smoothing: float = field(
+        default=0.0,
+        metadata={
+            "help": (
+                "Label-smoothing epsilon in [0, 0.5) for the 'cdpo' loss type. Ignored otherwise."
+            )
+        },
+    )
+    mwspo_lambda_nll: float = field(
+        default=0.0,
+        metadata={
+            "help": (
+                "Weight of an NLL/SFT anchor on the chosen response (RPO-style). "
+                ">0 prevents the chosen log-prob from collapsing. Typical range 0.1-0.3; "
+                "0.0 disables (default preserves original m-WSPO)."
+            )
+        },
+    )
     mwspo_weak_ref_model: str | None = field(
         default=None,
         metadata={"help": "Path or HF id of the (frozen) weak reference MLLM pi_ref^w."},

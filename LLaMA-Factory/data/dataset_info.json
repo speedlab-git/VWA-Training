@@ -576,6 +576,24 @@
       "assistant_tag": "gpt"
     }
   },
+  "rlhf_v_mwspo_hardneg": {
+    "file_name": "rlhf_v_mwspo_hardneg.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images",
+      "images_neg": "images_neg"
+    },
+    "tags": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    }
+  },
   "vlfeedback": {
     "hf_hub_url": "Zhihui/VLFeedback",
     "ranking": true,

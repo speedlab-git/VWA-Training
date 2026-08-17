@@ -181,3 +181,14 @@ wandb/
 swanlog/
 generated_predictions.jsonl
 predictions_score.json
+
+# m-WSPO local artifacts
+results/
+cache/
+logs/
+saves/
+lmms-eval/
+data/rlhf_v_images/
+data/rlhf_v_images_neg/
+data/RLHF-V/
+data/amber/

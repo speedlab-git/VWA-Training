@@ -59,6 +59,9 @@ class MWSPOHyperParams:
     disable_wspo: bool = False
     disable_img_wspo: bool = False
     disable_dpo: bool = False
+    dpo_loss_type: str = "sigmoid"
+    dpo_label_smoothing: float = 0.0
+    lambda_nll: float = 0.0
 
 
 def split_chosen_rejected(t: "torch.Tensor") -> tuple["torch.Tensor", "torch.Tensor"]:
@@ -136,16 +139,27 @@ def loss_dpo_mm(
     strong_ref_sum_yw: "torch.Tensor",
     strong_ref_sum_yl: "torch.Tensor",
     dpo_temperature: float,
+    loss_type: str = "sigmoid",
+    label_smoothing: float = 0.0,
 ) -> "torch.Tensor":
-    r"""Eq. 10 -- standard DPO loss conditioned on the matched image m_w.
+    r"""Eq. 10 -- DPO loss conditioned on the matched image m_w.
 
-    NOTE: uses *summed* log-probs, not length-normalized -- this is the
-    canonical DPO form and the temperature `dpo_temperature` is calibrated
-    against summed log-ratios.
+    Supports three variants via `loss_type`:
+      'sigmoid' -- canonical DPO (default)
+      'ipo'     -- squared log-ratio-margin loss
+      'cdpo'    -- label-smoothed DPO
     """
     pi_w = strong_pol_sum_yw - strong_ref_sum_yw
     pi_l = strong_pol_sum_yl - strong_ref_sum_yl
-    return -F.logsigmoid(dpo_temperature * (pi_w - pi_l)).mean()
+    logits = dpo_temperature * (pi_w - pi_l)
+
+    if loss_type == "ipo":
+        return ((logits - 1.0 / (2.0 * dpo_temperature)) ** 2).mean()
+    elif loss_type == "cdpo":
+        loss = -F.logsigmoid(logits) * (1 - label_smoothing) - F.logsigmoid(-logits) * label_smoothing
+        return loss.mean()
+    else:  # sigmoid (canonical DPO)
+        return -F.logsigmoid(logits).mean()
 
 
 def m_wspo_total_loss(
@@ -200,14 +214,26 @@ def m_wspo_total_loss(
     L_dpo = (
         zero
         if hp.disable_dpo
-        else loss_dpo_mm(strong_pol_sum_yw, strong_pol_sum_yl, strong_ref_sum_yw, strong_ref_sum_yl, hp.dpo_temperature)
+        else loss_dpo_mm(
+            strong_pol_sum_yw,
+            strong_pol_sum_yl,
+            strong_ref_sum_yw,
+            strong_ref_sum_yl,
+            hp.dpo_temperature,
+            loss_type=hp.dpo_loss_type,
+            label_smoothing=hp.dpo_label_smoothing,
+        )
     )
 
-    total = L_wspo + hp.alpha * (L_imgW + L_imgL) + hp.beta_dpo * L_dpo
+    # RPO-style NLL anchor on chosen response — prevents log-prob collapse
+    L_nll = zero if hp.lambda_nll == 0.0 else -strong_pol_mean_yw.mean()
+
+    total = L_wspo + hp.alpha * (L_imgW + L_imgL) + hp.beta_dpo * L_dpo + hp.lambda_nll * L_nll
     metrics = {
         "L_wspo": L_wspo.detach(),
         "L_img_w": L_imgW.detach(),
         "L_img_l": L_imgL.detach(),
         "L_dpo": L_dpo.detach(),
+        "L_nll": L_nll.detach(),
     }
     return total, metrics

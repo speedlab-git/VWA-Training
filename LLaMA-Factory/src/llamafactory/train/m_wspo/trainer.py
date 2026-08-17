@@ -145,6 +145,9 @@ class MWSPOTrainer(CustomDPOTrainer):
             disable_wspo=finetuning_args.mwspo_disable_wspo,
             disable_img_wspo=finetuning_args.mwspo_disable_img_wspo,
             disable_dpo=finetuning_args.mwspo_disable_dpo,
+            dpo_loss_type=finetuning_args.mwspo_dpo_loss_type,
+            dpo_label_smoothing=finetuning_args.mwspo_dpo_label_smoothing,
+            lambda_nll=finetuning_args.mwspo_lambda_nll,
         )
         self._mask_image_in_dpo = finetuning_args.mwspo_mask_image_in_dpo
 

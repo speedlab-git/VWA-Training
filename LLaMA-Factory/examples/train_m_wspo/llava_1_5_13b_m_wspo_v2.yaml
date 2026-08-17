@@ -1,0 +1,72 @@
+### m-WSPO training config: LLaVA-1.5 13B — v2 recipe
+### Same hyperparameters as llava_next_13b_m_wspo_v2 but using LLaVA-1.5-13B
+### as the strong model. This gives a direct apples-to-apples comparison with
+### SymMPO-13B (which also uses LLaVA-1.5-13B as its base).
+###
+### Key differences from the LLaVA-Next run:
+###   model:         /raid/scratch/mdhossa2025/mdhossa/models/llava-1.5-13b-hf  (fixed 336x336 input, no tiling)
+###   template:      llava                        (not llava_next)
+###   cutoff_len:    2048                         (LLaVA-1.5 uses 256 image tokens)
+###   image_max_pixels: removed                   (LLaVA-1.5 always resizes to 336x336)
+###
+### The existing weak-logprob cache was computed with LLaVA-1.5-7B, which is
+### the correct weak model family for this strong model.
+
+### model
+model_name_or_path: /raid/scratch/mdhossa2025/mdhossa/models/llava-1.5-13b-hf
+trust_remote_code: true
+
+### method
+stage: m_wspo
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 64
+lora_alpha: 64
+
+### m-WSPO specific (v2 recipe)
+mwspo_gamma:           0.1
+mwspo_alpha:           1.0
+mwspo_beta_dpo:        1.0
+mwspo_dpo_temperature: 0.1
+
+mwspo_lambda_nll:          0.2
+mwspo_dpo_loss_type:       cdpo
+mwspo_dpo_label_smoothing: 0.1
+
+mwspo_weak_ref_model:         null
+mwspo_weak_aligned_model:     null
+mwspo_weak_aligned_adapters:  null
+
+mwspo_neg_image_strategy:  in_batch
+mwspo_cache_weak_logprobs: true
+mwspo_weak_logprob_cache:  cache/rlhf_v_mwspo_weak_lp.parquet
+
+### dataset
+dataset: rlhf_v_mwspo
+template: llava
+cutoff_len: 2048
+max_samples: 100000
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/llava_1_5_13b/m_wspo_v2
+overwrite_output_dir: true
+plot_loss: true
+logging_steps: 10
+save_strategy: epoch
+save_total_limit: 3
+report_to: none
+
+### train
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 5.0e-7
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+bf16: true
+ddp_timeout: 180000000
+deepspeed: examples/deepspeed/ds_z3_config.json
+gradient_checkpointing: true
