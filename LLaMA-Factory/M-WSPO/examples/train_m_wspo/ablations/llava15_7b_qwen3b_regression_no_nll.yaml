@@ -1,0 +1,70 @@
+### Ablation: regression vision terms WITHOUT the 0.2 NLL anchor.
+### L = L_WSPO + α (L_I + L_R) + λ L_DPO
+###
+### Fair counterpart to llava15_7b_qwen3b_img_bt_no_nll.yaml: only
+### mwspo_img_loss_type differs (regression vs bt). Both drop L_NLL so the
+### log π(y_w | x, m_l) comparison is not confounded by the NLL stabilizer.
+
+### model
+model_name_or_path: llava-hf/llava-1.5-7b-hf
+trust_remote_code: true
+
+### method
+stage: m_wspo
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 64
+lora_alpha: 64
+
+### m-WSPO — regression Eqs. 8–9, no NLL
+mwspo_gamma:           0.1
+mwspo_alpha:           1.0
+mwspo_beta_dpo:        1.0
+mwspo_dpo_temperature: 0.1
+
+mwspo_lambda_nll:          0.0
+mwspo_dpo_loss_type:       cdpo
+mwspo_dpo_label_smoothing: 0.1
+
+mwspo_disable_wspo:     false
+mwspo_disable_img_wspo: false
+mwspo_disable_dpo:      false
+mwspo_img_loss_type:    regression
+
+mwspo_weak_ref_model:         null
+mwspo_weak_aligned_model:     null
+mwspo_weak_aligned_adapters:  null
+
+mwspo_neg_image_strategy:  in_batch
+mwspo_cache_weak_logprobs: true
+mwspo_weak_logprob_cache:  cache/rlhf_v_mwspo_weak_lp_qwen3b.parquet
+
+### dataset
+dataset: rlhf_v_mwspo
+template: llava
+cutoff_len: 2048
+max_samples: 100000
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/llava_1_5_7b/ablation_regression_no_nll
+overwrite_output_dir: true
+plot_loss: true
+logging_steps: 10
+save_strategy: epoch
+save_total_limit: 3
+report_to: none
+
+### train
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 5.0e-7
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+bf16: true
+ddp_timeout: 180000000
+deepspeed: examples/deepspeed/ds_z3_config.json
+gradient_checkpointing: true

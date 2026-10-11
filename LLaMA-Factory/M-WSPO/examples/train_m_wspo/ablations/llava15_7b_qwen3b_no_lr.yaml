@@ -1,0 +1,69 @@
+### Ablation: drop L_R only (Eq. 9) — keep L_WSPO + L_I + DPO^m.
+### L = L_WSPO + alpha * L_I + beta_dpo * L_DPO^m + lambda_nll * L_nll
+###
+### Same recipe as llava_1_5_7b_m_wspo_v2_qwen3b.yaml except mwspo_disable_lr: true.
+
+### model
+model_name_or_path: llava-hf/llava-1.5-7b-hf
+trust_remote_code: true
+
+### method
+stage: m_wspo
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 64
+lora_alpha: 64
+
+### m-WSPO (v2 + Qwen3B weak cache) — L_R OFF
+mwspo_gamma:           0.1
+mwspo_alpha:           1.0
+mwspo_beta_dpo:        1.0
+mwspo_dpo_temperature: 0.1
+
+mwspo_lambda_nll:          0.2
+mwspo_dpo_loss_type:       cdpo
+mwspo_dpo_label_smoothing: 0.1
+
+mwspo_disable_wspo:     false
+mwspo_disable_img_wspo: false
+mwspo_disable_li:       false
+mwspo_disable_lr:       true
+mwspo_disable_dpo:      false
+
+mwspo_weak_ref_model:         null
+mwspo_weak_aligned_model:     null
+mwspo_weak_aligned_adapters:  null
+
+mwspo_neg_image_strategy:  in_batch
+mwspo_cache_weak_logprobs: true
+mwspo_weak_logprob_cache:  cache/rlhf_v_mwspo_weak_lp_qwen3b.parquet
+
+### dataset
+dataset: rlhf_v_mwspo
+template: llava
+cutoff_len: 2048
+max_samples: 100000
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/llava_1_5_7b/ablation_no_lr
+overwrite_output_dir: true
+plot_loss: true
+logging_steps: 10
+save_strategy: epoch
+save_total_limit: 3
+report_to: none
+
+### train
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 5.0e-7
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+bf16: true
+ddp_timeout: 180000000
+deepspeed: examples/deepspeed/ds_z3_config.json
+gradient_checkpointing: true
